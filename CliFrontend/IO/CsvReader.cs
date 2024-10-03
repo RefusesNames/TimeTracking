@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 public class CsvReader(StreamReader reader)
 {
 	private Regex _lineRegex
-		= new(@"(?<Start>[^,]+),(?<End>[^,]*),(?<Project>[^,]+),""(?<Ticket>[^""]+)"",""(?<Comment>[^""]+)""");
+		= new(@"(?<Start>[^,]+),(?<End>[^,]*),(?<Project>[^,]+),""(?<Ticket>[^""]+)"",""(?<Comment>[^""]*)""");
 
 	public IList<Entry> Read()
 	{
