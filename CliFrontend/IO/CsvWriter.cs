@@ -19,7 +19,7 @@ public class CsvWriter(StreamWriter writer)
 	private string ToCSV(Entry entry)
 		=> $"{entry.Start}"
 		+ $",{entry.End}"
-		+ $",{entry.Data.ProjectName}"
+		+ $",\"{entry.Data.ProjectName}\""
 		+ $",\"{entry.Data.Ticket}\""
 		+ $",\"{entry.Data.Comment}\"";
 }
