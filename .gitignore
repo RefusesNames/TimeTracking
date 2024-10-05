@@ -1,2 +1,11 @@
+# binary files
 bin
 obj
+
+# files related to visual studio
+.vs
+properties
+*.args.json
+
+# files created while testing
+*.csv
