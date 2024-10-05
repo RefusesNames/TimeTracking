@@ -37,7 +37,11 @@ if (IsUnfinished(lastEntry))
 }
 else
 {
-	EntryData data = QueryEntryData();
+	List<string> projects = previousEntries
+		.Select(entry => entry.Data.ProjectName)
+		.ToList();
+	SuggestionProvider suggestionProviderProject = new(projects);
+	EntryData data = QueryEntryData(suggestionProviderProject);
 	Entry entry = new(DateTime.UtcNow.RoundToQuarterHour(), null, data);
 
 	using StreamWriter streamWriter = new(filePath, append: true);
@@ -55,25 +59,15 @@ else
 static bool IsUnfinished(Entry? entry)
 	=> entry is { End: null };
 
-static EntryData QueryEntryData()
+static EntryData QueryEntryData(SuggestionProvider suggestionProviderProject)
 {
-	string project = QueryValue("Project", "NA");
-	string ticket = QueryValue("Ticket", "NA");
-	string comment = QueryValue("Comment", "");
+	CommandLineService commandLine = new();
+
+	string project = commandLine.QueryValue("Project", "NA", suggestionProviderProject);
+	string ticket = commandLine.QueryValue("Ticket", "NA");
+	string comment = commandLine.QueryValue("Comment", "");
 
 	return new EntryData(project, ticket, comment);
 }
 
-static string QueryValue(string queryString, string defaultValue = "")
-{
-	Console.Write($"{queryString}: ");
-	string? value = Console.ReadLine();
-
-	if (value?.Trim() is null or "")
-	{
-		value = defaultValue;
-	}
-
-	return value;
-}
 

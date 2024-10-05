@@ -8,14 +8,11 @@ public static class Extensions
 	{
 		int minutes = dateTime.Minute;
 		int roundedMinutes = (int)(Math.Round(minutes / 15.0) * 15);
-		return new DateTime(
-				dateTime.Year,
-				dateTime.Month,
-				dateTime.Day,
-				dateTime.Hour,
-				roundedMinutes,
-				0,
-				dateTime.Kind);
+		int difference = roundedMinutes - minutes;
+		
+		return dateTime
+			+ TimeSpan.FromMinutes(difference)
+			- TimeSpan.FromSeconds(dateTime.Second);
 	}
 
 
