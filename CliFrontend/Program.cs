@@ -42,7 +42,15 @@ else
 		.ToList();
 	SuggestionProvider suggestionProviderProject = new(projects);
 	EntryData data = QueryEntryData(suggestionProviderProject);
-	Entry entry = new(DateTime.UtcNow.RoundToQuarterHour(), null, data);
+
+	var timeNow = DateTime.UtcNow.RoundToQuarterHour();
+	Entry entry;
+
+	if (previousEntries.Count > 0
+		&& (timeNow - previousEntries.Last().End!.Value) < TimeSpan.FromMinutes(20))
+		entry = new(previousEntries.Last().End!.Value, null, data); // fill gaps that occur while entering data
+	else
+		entry = new(DateTime.UtcNow.RoundToQuarterHour(), null, data);
 
 	using StreamWriter streamWriter = new(filePath, append: true);
 	CsvWriter csvWriter = new CsvWriter(streamWriter);
