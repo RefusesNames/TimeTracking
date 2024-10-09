@@ -41,7 +41,11 @@ else
 		.Select(entry => entry.Data.ProjectName)
 		.ToList();
 	SuggestionProvider suggestionProviderProject = new(projects);
-	EntryData data = QueryEntryData(suggestionProviderProject);
+	List<string> tickets = previousEntries
+		.Select(entry => entry.Data.Ticket)
+		.ToList();
+	SuggestionProvider suggestionProviderTicket = new(tickets);
+	EntryData data = QueryEntryData(suggestionProviderProject, suggestionProviderTicket);
 
 	var timeNow = DateTime.UtcNow.RoundToQuarterHour();
 	Entry entry;
@@ -67,12 +71,14 @@ else
 static bool IsUnfinished(Entry? entry)
 	=> entry is { End: null };
 
-static EntryData QueryEntryData(SuggestionProvider suggestionProviderProject)
+static EntryData QueryEntryData(
+		SuggestionProvider suggestionProviderProject,
+		SuggestionProvider suggestionProviderTicket)
 {
 	CommandLineService commandLine = new();
 
 	string project = commandLine.QueryValue("Project", "NA", suggestionProviderProject);
-	string ticket = commandLine.QueryValue("Ticket", "NA");
+	string ticket = commandLine.QueryValue("Ticket", "NA", suggestionProviderTicket);
 	string comment = commandLine.QueryValue("Comment", "");
 
 	return new EntryData(project, ticket, comment);

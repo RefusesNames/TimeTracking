@@ -56,6 +56,14 @@ internal class CommandLineService
 					Console.WriteLine();
 					goto end_of_loop;
 
+				case ConsoleKey.Tab:
+					if (currentSuggestion is null || currentSuggestion == "")
+						break;
+					string charactersToAdd = currentSuggestion.Substring(input.Length);
+					Console.Write(charactersToAdd);
+					input = currentSuggestion;
+					break;
+
 				default:
 					input += key.KeyChar;
 

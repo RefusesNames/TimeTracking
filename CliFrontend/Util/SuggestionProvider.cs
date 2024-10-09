@@ -32,4 +32,24 @@ public class SuggestionProvider
 			.FirstOrDefault()
 			?.Text;
 
+	public string GetCommonPrefix()
+		=> _suggestions
+		.Select(suggestion => suggestion.Text)
+		.Aggregate(string.Empty, (word1, word2) => GetCommonPrefix(word1, word2));
+
+	private static string GetCommonPrefix(string word1, string word2)
+	{
+		string currentLongestPrefix = string.Empty;
+		for (int i = 1; i < word1.Length; ++i)
+		{
+			string prefixCandidate = word1.Substring(0, i);
+			if (word2.StartsWith(prefixCandidate))
+				currentLongestPrefix = prefixCandidate;
+			else
+				break;
+		}
+
+		return currentLongestPrefix;
+	}
+
 }
