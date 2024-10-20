@@ -9,7 +9,7 @@ public class CsvReader(StreamReader reader)
 	private Regex _lineRegex
 		= new(@"(?<Start>[^,]+),(?<End>[^,]*),""(?<Project>[^""]+)"",""(?<Ticket>[^""]+)"",""(?<Comment>[^""]*)""");
 
-	public IList<Entry> Read()
+	public List<Entry> Read()
 	{
 		string? header = reader.ReadLine();
 		AssertHeaderIsValid(header);

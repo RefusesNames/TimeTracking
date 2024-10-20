@@ -17,13 +17,13 @@ internal class CommandLineService
 		return value;
 	}
 
-	public string QueryValue(string queryString, string defaultValue, SuggestionProvider suggestions)
+	public string QueryValue(string queryString, string defaultValue, CompletionProvider completions)
 	{
 		string displayedText = $"{queryString}: ";
 		Console.Write(displayedText);
 
 		string input = string.Empty;
-		string currentSuggestion = string.Empty;
+		string currentCompletion = string.Empty;
 
 		while(true)
 		{
@@ -34,54 +34,54 @@ internal class CommandLineService
 					if (input.Length > 0)
 					{
 						input = input.Substring(0, input.Length - 1);
-						Console.Write("\b \b");
+						ClearLastCharacter();
 					}
 					break;
 
 				case ConsoleKey.Escape:
 				{
-					int lengthDifference = currentSuggestion.Length - input.Length;
+					int lengthDifference = currentCompletion!.Length - input.Length;
 					for (int i = 0; i < lengthDifference; ++i)
 						Console.Write(" ");
 					for (int i = 0; i < lengthDifference; ++i)
 						Console.Write("\b");
-					currentSuggestion = "";
+					currentCompletion = "";
 					break;
 				}
 
 
 				case ConsoleKey.Enter:
-					if (currentSuggestion is not null && currentSuggestion != "")
-						input = currentSuggestion;
+					if (currentCompletion is not null && currentCompletion != "")
+						input = currentCompletion;
 					Console.WriteLine();
 					goto end_of_loop;
 
 				case ConsoleKey.Tab:
-					if (currentSuggestion is null || currentSuggestion == "")
+					if (currentCompletion is null || currentCompletion == "")
 						break;
-					string charactersToAdd = currentSuggestion.Substring(input.Length);
+					string charactersToAdd = currentCompletion.Substring(input.Length);
 					Console.Write(charactersToAdd);
-					input = currentSuggestion;
+					input = currentCompletion;
 					break;
 
 				default:
 					input += key.KeyChar;
 
-					if (!currentSuggestion.StartsWith(input))
+					if (!currentCompletion!.StartsWith(input))
 					{
-						int lengthDifference = currentSuggestion.Length - input.Length + 1;
+						int lengthDifference = currentCompletion.Length - input.Length + 1;
 						for (int i = 0; i < lengthDifference; ++i)
 							Console.Write(" ");
 						for (int i = 0; i < lengthDifference; ++i)
 							Console.Write("\b");
-						currentSuggestion = "";
+						currentCompletion = "";
 					}
 
-					if (suggestions.GetSuggestion(input) is string suggestion)
+					if (completions.GetCompletion(input) is string completion)
 					{
-						currentSuggestion = suggestion;
-						Console.Write(suggestion.Substring(input.Length-1));
-						int lengthDifference = suggestion.Length - input.Length;
+						currentCompletion = completion;
+						Console.Write(completion.Substring(input.Length-1));
+						int lengthDifference = completion.Length - input.Length;
 						for (int i = 0; i < lengthDifference; ++i)
 							Console.Write("\b");
 					}
@@ -99,5 +99,67 @@ end_of_loop:
 		}
 
 		return input;
+	}
+
+	public string QueryValue(string queryString, string defaultValue, SuggestionProvider suggestions)
+	{
+		string displayedText = $"{queryString}: ";
+		Console.Write(displayedText);
+
+		string suggestion = suggestions.GetSuggestion();
+		Console.Write(suggestion);
+
+		string input = suggestion;
+
+		while(true)
+		{
+			var key = Console.ReadKey(intercept: true);
+			switch (key.Key)
+			{
+				case ConsoleKey.Backspace:
+					if (input.Length > 0)
+					{
+						input = input.Substring(0, input.Length - 1);
+						ClearLastCharacter();
+					}
+					break;
+
+				case ConsoleKey.Escape:
+				{
+					ClearLastCharacters(input.Length);
+					input = "";
+					break;
+				}
+
+				case ConsoleKey.Enter:
+					Console.WriteLine();
+					goto end_of_loop;
+
+				default:
+					input += key.KeyChar;
+					Console.Write(key.KeyChar);
+
+					break;
+			}
+		}
+end_of_loop:
+
+		if (input.Trim() is "")
+		{
+			input = defaultValue;
+		}
+
+		return input;
+	}
+
+	private static void ClearLastCharacter()
+		=> Console.Write("\b \b");
+
+	private static void ClearLastCharacters(int numOfCharacters)
+	{
+		for (int i = 0; i < numOfCharacters; i++)
+		{
+			ClearLastCharacter();
+		}
 	}
 }

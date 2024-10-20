@@ -2,6 +2,9 @@
 using CliFrontend.IO;
 using CliFrontend.Util;
 
+const string DefaultProject = "NA";
+const string DefaultTicket = "NA";
+
 Console.WriteLine("Time Tracking");
 
 if (args.Length < 1)
@@ -11,7 +14,7 @@ string filePath = args[0];
 
 bool fileFound = File.Exists(filePath);
 
-IList<Entry> previousEntries;
+List<Entry> previousEntries;
 if (fileFound)
 {
 	using StreamReader streamReader = new(args[0]);
@@ -37,15 +40,7 @@ if (IsUnfinished(lastEntry))
 }
 else
 {
-	List<string> projects = previousEntries
-		.Select(entry => entry.Data.ProjectName)
-		.ToList();
-	SuggestionProvider suggestionProviderProject = new(projects);
-	List<string> tickets = previousEntries
-		.Select(entry => entry.Data.Ticket)
-		.ToList();
-	SuggestionProvider suggestionProviderTicket = new(tickets);
-	EntryData data = QueryEntryData(suggestionProviderProject, suggestionProviderTicket);
+	EntryData data = QueryEntryData(previousEntries);
 
 	var timeNow = DateTime.UtcNow.RoundToQuarterHour();
 	Entry entry;
@@ -71,14 +66,23 @@ else
 static bool IsUnfinished(Entry? entry)
 	=> entry is { End: null };
 
-static EntryData QueryEntryData(
-		SuggestionProvider suggestionProviderProject,
-		SuggestionProvider suggestionProviderTicket)
+static EntryData QueryEntryData(IReadOnlyList<Entry> previousEntries)
 {
+	List<string> projects = previousEntries
+		.Select(entry => entry.Data.ProjectName)
+		.ToList();
+	CompletionProvider completionProviderProject = new(projects);
+
 	CommandLineService commandLine = new();
 
-	string project = commandLine.QueryValue("Project", "NA", suggestionProviderProject);
-	string ticket = commandLine.QueryValue("Ticket", "NA", suggestionProviderTicket);
+	string project = commandLine.QueryValue("Project", DefaultProject, completionProviderProject);
+
+	List<string> tickets = previousEntries
+		.Where(entry => entry.Data.ProjectName == project)
+		.Select(entry => entry.Data.Ticket)
+		.ToList();
+	SuggestionProvider suggestionProviderTicket = new(tickets, new() {DefaultTicket});
+	string ticket = commandLine.QueryValue("Ticket", DefaultTicket, suggestionProviderTicket);
 	string comment = commandLine.QueryValue("Comment", "");
 
 	return new EntryData(project, ticket, comment);
