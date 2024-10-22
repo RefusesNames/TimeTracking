@@ -29,6 +29,7 @@ Command evaluateCommand = new(
 	"eval",
 	description: "Evaluate the given time frame");
 evaluateCommand.AddArgument(pathArgument);
+evaluateCommand.SetHandler(Evaluate, pathArgument);
 
 rootCommand.AddCommand(trackCommand);
 rootCommand.AddCommand(evaluateCommand);
@@ -88,6 +89,8 @@ static void Track(string filePath)
 		csvWriter.Write(entry);
 	}
 
+	return;
+
 	static bool IsUnfinished(Entry? entry)
 		=> entry is { End: null };
 
@@ -112,4 +115,60 @@ static void Track(string filePath)
 
 		return new EntryData(project, ticket, comment);
 	}
+}
+
+static void Evaluate(string filePath)
+{
+	bool fileFound = File.Exists(filePath);
+
+	List<Entry> entries;
+	if (fileFound)
+	{
+		using StreamReader streamReader = new(filePath);
+		CsvReader csvReader = new(streamReader);
+		entries = csvReader.Read();
+	}
+	else
+		throw new ArgumentException($"File not found: {filePath}");
+
+	Console.WriteLine("TOTAL TIME:");
+	Console.WriteLine("\tToday: {0}", GetTimeTrackedToday(entries));
+	Console.WriteLine("\tThis month: {0}", GetTimeTrackedThisMonth(entries));
+
+	Console.WriteLine("\nBY PROJECT:");
+	List<IGrouping<string, Entry>> entriesByProject = entries
+		.GroupBy(entry => entry.Data.ProjectName)
+		.ToList();
+
+	foreach(IGrouping<string, Entry> projectGroup in entriesByProject)
+	{
+		string projectName = projectGroup.Key;
+		TimeSpan trackedToday = GetTimeTrackedToday(projectGroup);
+		TimeSpan trackedThisMonth = GetTimeTrackedThisMonth(projectGroup);
+
+
+		Console.WriteLine("\t- {0}", projectName);
+		Console.WriteLine("\t\tToday: {0}", trackedToday);
+		Console.WriteLine("\t\tThis month: {0}", trackedThisMonth);
+	}
+
+	return;
+
+	static TimeSpan GetTimeTrackedToday(IEnumerable<Entry> entries)
+		=> entries
+		.Where(entry => entry.HasEndTime())
+		.Where(entry => entry.Start.Date == DateTime.Today)
+		.Select(entry => (entry.End - entry.Start) ?? TimeSpan.Zero)
+		.Aggregate(
+				seed: TimeSpan.Zero,
+				(total, nextTimeSpan) => total + nextTimeSpan);
+
+	static TimeSpan GetTimeTrackedThisMonth(IEnumerable<Entry> entries)
+		=> entries
+		.Where(entry => entry.HasEndTime())
+		.Where(entry => entry.Start.Date == DateTime.Today)
+		.Select(entry => (entry.End - entry.Start) ?? TimeSpan.Zero)
+		.Aggregate(
+				seed: TimeSpan.Zero,
+				(total, nextTimeSpan) => total + nextTimeSpan);
 }
