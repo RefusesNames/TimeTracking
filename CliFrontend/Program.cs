@@ -135,6 +135,8 @@ static void Evaluate(string filePath)
 	Console.WriteLine("\tToday: {0}", GetTimeTrackedToday(entries));
 	Console.WriteLine("\tThis month: {0}", GetTimeTrackedThisMonth(entries));
 
+	Console.WriteLine("\nDays worked this month: {0}", GetDaysWorked(entries));
+
 	Console.WriteLine("\nBY PROJECT:");
 	List<IGrouping<string, Entry>> entriesByProject = entries
 		.GroupBy(entry => entry.Data.ProjectName)
@@ -166,10 +168,21 @@ static void Evaluate(string filePath)
 	static TimeSpan GetTimeTrackedThisMonth(IEnumerable<Entry> entries)
 		=> entries
 		.Where(entry => entry.HasEndTime())
-		.Where(entry => entry.Start.Date.Year == DateTime.Today.Year
-				&& entry.Start.Date.Month == DateTime.Today.Month)
+		.Where(IsThisMonth)
 		.Select(entry => (entry.End - entry.Start) ?? TimeSpan.Zero)
 		.Aggregate(
 				seed: TimeSpan.Zero,
 				(total, nextTimeSpan) => total + nextTimeSpan);
+
+	static int GetDaysWorked(IEnumerable<Entry> entries)
+		=> entries
+		.Where(entry => entry.HasEndTime())
+		.Where(IsThisMonth)
+		.Select(entry => entry.Start.Date)
+		.Distinct()
+		.Count();
+
+	static bool IsThisMonth(Entry entry)
+		=> entry.Start.Date.Year == DateTime.Today.Year
+				&& entry.Start.Date.Month == DateTime.Today.Month;
 }
