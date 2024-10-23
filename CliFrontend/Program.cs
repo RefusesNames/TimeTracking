@@ -166,7 +166,8 @@ static void Evaluate(string filePath)
 	static TimeSpan GetTimeTrackedThisMonth(IEnumerable<Entry> entries)
 		=> entries
 		.Where(entry => entry.HasEndTime())
-		.Where(entry => entry.Start.Date == DateTime.Today)
+		.Where(entry => entry.Start.Date.Year == DateTime.Today.Year
+				&& entry.Start.Date.Month == DateTime.Today.Month)
 		.Select(entry => (entry.End - entry.Start) ?? TimeSpan.Zero)
 		.Aggregate(
 				seed: TimeSpan.Zero,
