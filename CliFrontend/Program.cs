@@ -1,5 +1,6 @@
 ﻿using CliFrontend.Data;
 using CliFrontend.IO;
+using CliFrontend.Services;
 using CliFrontend.Util;
 using System.CommandLine;
 
@@ -132,10 +133,10 @@ static void Evaluate(string filePath)
 		throw new ArgumentException($"File not found: {filePath}");
 
 	Console.WriteLine("TOTAL TIME:");
-	Console.WriteLine("\tToday: {0}", GetTimeTrackedToday(entries));
-	Console.WriteLine("\tThis month: {0}", GetTimeTrackedThisMonth(entries));
+	Console.WriteLine("\tToday: {0}", entries.GetTimeTrackedToday());
+	Console.WriteLine("\tThis month: {0}", entries.GetTimeTrackedThisMonth());
 
-	Console.WriteLine("\nDays worked this month: {0}", GetDaysWorked(entries));
+	Console.WriteLine("\nDays worked this month: {0}", entries.GetDaysWorked());
 
 	Console.WriteLine("\nBY PROJECT:");
 	List<IGrouping<string, Entry>> entriesByProject = entries
@@ -145,8 +146,8 @@ static void Evaluate(string filePath)
 	foreach(IGrouping<string, Entry> projectGroup in entriesByProject)
 	{
 		string projectName = projectGroup.Key;
-		TimeSpan trackedToday = GetTimeTrackedToday(projectGroup);
-		TimeSpan trackedThisMonth = GetTimeTrackedThisMonth(projectGroup);
+		TimeSpan trackedToday = projectGroup.GetTimeTrackedToday();
+		TimeSpan trackedThisMonth = projectGroup.GetTimeTrackedThisMonth();
 
 
 		Console.WriteLine("\t- {0}", projectName);
@@ -155,34 +156,4 @@ static void Evaluate(string filePath)
 	}
 
 	return;
-
-	static TimeSpan GetTimeTrackedToday(IEnumerable<Entry> entries)
-		=> entries
-		.Where(entry => entry.HasEndTime())
-		.Where(entry => entry.Start.Date == DateTime.Today)
-		.Select(entry => (entry.End - entry.Start) ?? TimeSpan.Zero)
-		.Aggregate(
-				seed: TimeSpan.Zero,
-				(total, nextTimeSpan) => total + nextTimeSpan);
-
-	static TimeSpan GetTimeTrackedThisMonth(IEnumerable<Entry> entries)
-		=> entries
-		.Where(entry => entry.HasEndTime())
-		.Where(IsThisMonth)
-		.Select(entry => (entry.End - entry.Start) ?? TimeSpan.Zero)
-		.Aggregate(
-				seed: TimeSpan.Zero,
-				(total, nextTimeSpan) => total + nextTimeSpan);
-
-	static int GetDaysWorked(IEnumerable<Entry> entries)
-		=> entries
-		.Where(entry => entry.HasEndTime())
-		.Where(IsThisMonth)
-		.Select(entry => entry.Start.Date)
-		.Distinct()
-		.Count();
-
-	static bool IsThisMonth(Entry entry)
-		=> entry.Start.Date.Year == DateTime.Today.Year
-				&& entry.Start.Date.Month == DateTime.Today.Month;
 }
