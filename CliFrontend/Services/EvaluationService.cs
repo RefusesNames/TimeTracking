@@ -31,6 +31,18 @@ public static class EvaluationService
 		.Distinct()
 		.Count();
 
+	public static TimeSpan GetTimeTracked(this IEnumerable<Entry> entries)
+		=> entries
+		.Where(entry => entry.HasEndTime())
+		.Distinct()
+		.Select(entry => (entry.End - entry.Start) ?? TimeSpan.Zero)
+		.Aggregate(
+				seed: TimeSpan.Zero,
+				(total, nextTimeSpan) => total + nextTimeSpan);
+
+	public static TimeSpan GetOvertime(this IEnumerable<Entry> entries)
+		=> entries.GetDaysWorked() * TimeSpan.FromHours(8) - entries.GetTimeTracked();
+
 	private static bool IsThisMonth(Entry entry)
 		=> entry.Start.Date.Year == DateTime.Today.Year
 				&& entry.Start.Date.Month == DateTime.Today.Month;

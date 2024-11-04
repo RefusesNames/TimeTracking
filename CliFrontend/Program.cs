@@ -145,6 +145,7 @@ static void Evaluate(string filePath)
 	Console.WriteLine("\tThis month: {0}", entries.GetTimeTrackedThisMonth());
 
 	Console.WriteLine("\nDays worked this month: {0}", entries.GetDaysWorked());
+	Console.WriteLine("\nAccumulated overtime: {0}", entries.GetOvertime());
 
 	Console.WriteLine("\nBY PROJECT:");
 	List<IGrouping<string, Entry>> entriesByProject = entries
