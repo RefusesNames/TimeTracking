@@ -60,6 +60,14 @@ static void Track(string filePath)
 				lastEntry!.Start,
 				DateTime.UtcNow.RoundToQuarterHour(),
 				lastEntry.Data);
+		TimeSpan timeTracked = previousEntries.Last().End - previousEntries.Last().Start
+			?? TimeSpan.Zero;
+		var trackedFor = previousEntries.Last()!.Data;
+		Console.WriteLine("Tracked {0} hours, {1} minutes for '{2}' ({3})",
+				timeTracked.Hours,
+				timeTracked.Minutes,
+				trackedFor.Ticket,
+				trackedFor.ProjectName);
 		using StreamWriter streamWriter = new(filePath, append: false);
 		CsvWriter csvWriter = new CsvWriter(streamWriter);
 		csvWriter.WriteHeader();
