@@ -1,5 +1,6 @@
 namespace CliFrontend.IO;
 
+using CliFrontend.Data;
 using CliFrontend.Util;
 
 internal class CommandLineService
@@ -161,5 +162,101 @@ end_of_loop:
 		{
 			ClearLastCharacter();
 		}
+	}
+
+	public void ShowOverview(List<Entry> entries)
+	{
+		const string separator = " | ";
+		const string unknownValue = "???";
+
+		(int start, int end, int project, int ticket, int comment) columnWidths = entries
+			.Select(entry => (
+				start: entry.Start.ToString().Length,
+				end: entry.End?.ToString().Length ?? unknownValue.Length,
+				project: entry.Data.ProjectName.ToString().Length,
+				ticket: entry.Data.Ticket.ToString().Length,
+				comment: entry.Data.Comment.ToString().Length))
+			.Aggregate(
+				seed: (start: 0, end: 0, project: 0, ticket: 0, comment: 0),
+				(max, current) => (
+					start: Math.Max(max.start, current.start),
+					end: Math.Max(max.end, current.end),
+					project: Math.Max(max.project, current.project),
+					ticket: Math.Max(max.ticket, current.ticket),
+					comment: Math.Max(max.comment, current.comment)));
+
+		Console.Clear();
+		PrintHeader();
+
+		PrintLine(columnWidths.start
+				+ columnWidths.end
+				+ columnWidths.project
+				+ columnWidths.ticket
+				+ columnWidths.comment
+				+ 4 * separator.Length); // we have 5 entries, so 4 separators
+
+		entries.ForEach(Print);
+
+		return;
+
+		void PrintHeader()
+		{
+			const string startKeyword = "START";
+			const string endKeyword = "END";
+			const string projectKeyword = "PROJECT";
+			const string ticketKeyword = "TICKET";
+			const string commentKeyword = "COMMENT";
+
+			columnWidths.start = Math.Max(columnWidths.start, startKeyword.Length);
+			columnWidths.end = Math.Max(columnWidths.end, endKeyword.Length);
+			columnWidths.project = Math.Max(columnWidths.project, projectKeyword.Length);
+			columnWidths.ticket = Math.Max(columnWidths.ticket, ticketKeyword.Length);
+			columnWidths.comment = Math.Max(columnWidths.comment, commentKeyword.Length);
+
+			List<string> captions = new()
+			{
+				FillToLength(startKeyword, columnWidths.start),
+				FillToLength(endKeyword, columnWidths.end),
+				FillToLength(projectKeyword, columnWidths.project),
+				FillToLength(ticketKeyword, columnWidths.ticket),
+				FillToLength(commentKeyword, columnWidths.comment)
+			};
+
+			Console.WriteLine(string.Join(separator, captions));
+		}
+
+		void Print(Entry entry)
+		{
+			List<string> entryData = new()
+			{
+				FillToLength(entry.Start.ToString(), columnWidths.start),
+				FillToLength(entry.End?.ToString() ?? unknownValue, columnWidths.end),
+				FillToLength(entry.Data.ProjectName, columnWidths.project),
+				FillToLength(entry.Data.Ticket, columnWidths.ticket),
+				FillToLength(entry.Data.Comment, columnWidths.comment)
+			};
+			Console.WriteLine(string.Join(separator, entryData));
+		}
+
+		static string FillToLength(string input, int desiredLength)
+		{
+			if (input.Length >= desiredLength)
+				return input;
+
+			const char spacer = ' ';
+
+			int bufferSizeBefore = (desiredLength - input.Length) / 2;
+			int bufferSizeAfter = desiredLength - input.Length - bufferSizeBefore;
+			string bufferBefore = new string(spacer, bufferSizeBefore);
+			string bufferAfter = new string(spacer, bufferSizeAfter);
+
+			return bufferBefore + input + bufferAfter;
+		}
+
+		static void PrintLine(int length)
+		{
+			Console.WriteLine(new string('-', length));
+		}
+
 	}
 }

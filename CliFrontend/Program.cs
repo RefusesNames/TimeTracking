@@ -32,8 +32,16 @@ Command evaluateCommand = new(
 evaluateCommand.AddArgument(pathArgument);
 evaluateCommand.SetHandler(Evaluate, pathArgument);
 
+Command listCommand = new(
+	"list",
+	description: "Lists all data");
+listCommand.AddArgument(pathArgument);
+listCommand.SetHandler(List, pathArgument);
+
 rootCommand.AddCommand(trackCommand);
 rootCommand.AddCommand(evaluateCommand);
+rootCommand.AddCommand(listCommand);
+
 
 return await rootCommand.InvokeAsync(args);
 
@@ -128,17 +136,7 @@ static void Track(string filePath)
 
 static void Evaluate(string filePath)
 {
-	bool fileFound = File.Exists(filePath);
-
-	List<Entry> entries;
-	if (fileFound)
-	{
-		using StreamReader streamReader = new(filePath);
-		CsvReader csvReader = new(streamReader);
-		entries = csvReader.Read();
-	}
-	else
-		throw new ArgumentException($"File not found: {filePath}");
+	List<Entry> entries = LoadFromFile(filePath);
 
 	Console.WriteLine("TOTAL TIME:");
 	Console.WriteLine("\tToday: {0}", entries.GetTimeTrackedToday());
@@ -165,4 +163,29 @@ static void Evaluate(string filePath)
 	}
 
 	return;
+}
+
+static void List(string filePath)
+{
+	List<Entry> entries = LoadFromFile(filePath);
+
+	CommandLineService commandLine = new();
+	commandLine.ShowOverview(entries);
+}
+
+static List<Entry> LoadFromFile(string filePath)
+{
+	bool fileFound = File.Exists(filePath);
+
+	List<Entry> entries;
+	if (fileFound)
+	{
+		using StreamReader streamReader = new(filePath);
+		CsvReader csvReader = new(streamReader);
+		entries = csvReader.Read();
+	}
+	else
+		throw new ArgumentException($"File not found: {filePath}");
+
+	return entries;
 }
