@@ -185,7 +185,6 @@ end_of_loop:
 					ticket: Math.Max(max.ticket, current.ticket),
 					comment: Math.Max(max.comment, current.comment)));
 
-		Console.Clear();
 		PrintHeader();
 
 		PrintLine(columnWidths.start
