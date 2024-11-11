@@ -41,7 +41,7 @@ public static class EvaluationService
 				(total, nextTimeSpan) => total + nextTimeSpan);
 
 	public static TimeSpan GetOvertime(this IEnumerable<Entry> entries)
-		=> entries.GetDaysWorked() * TimeSpan.FromHours(8) - entries.GetTimeTracked();
+		=> entries.GetTimeTracked() - entries.GetDaysWorked() * TimeSpan.FromHours(8);
 
 	private static bool IsThisMonth(Entry entry)
 		=> entry.Start.Date.Year == DateTime.Today.Year
