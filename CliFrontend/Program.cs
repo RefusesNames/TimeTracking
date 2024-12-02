@@ -141,8 +141,10 @@ static void Evaluate(string filePath)
 	Console.WriteLine("TOTAL TIME:");
 	Console.WriteLine("\tToday: {0}", entries.GetTimeTrackedToday());
 	Console.WriteLine("\tThis month: {0}", entries.GetTimeTrackedThisMonth());
+	Console.WriteLine("\tLast month: {0}", entries.GetTimeTrackedLastMonth());
 
 	Console.WriteLine("\nDays worked this month: {0}", entries.GetDaysWorked());
+	Console.WriteLine("\nDays worked last month: {0}", entries.GetDaysWorkedLastMonth());
 	Console.WriteLine("\nAccumulated overtime: {0}", entries.GetOvertime());
 
 	Console.WriteLine("\nBY PROJECT:");
@@ -155,11 +157,12 @@ static void Evaluate(string filePath)
 		string projectName = projectGroup.Key;
 		TimeSpan trackedToday = projectGroup.GetTimeTrackedToday();
 		TimeSpan trackedThisMonth = projectGroup.GetTimeTrackedThisMonth();
-
+		TimeSpan trackedLastMonth = projectGroup.GetTimeTrackedLastMonth();
 
 		Console.WriteLine("\t- {0}", projectName);
 		Console.WriteLine("\t\tToday: {0}", trackedToday);
 		Console.WriteLine("\t\tThis month: {0}", trackedThisMonth);
+		Console.WriteLine("\t\tLast month: {0}", trackedLastMonth);
 	}
 
 	return;
