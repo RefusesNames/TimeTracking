@@ -3,6 +3,7 @@ using CliFrontend.IO;
 using CliFrontend.Services;
 using CliFrontend.Util;
 using System.CommandLine;
+using TimeProvider = CliFrontend.Util.TimeProvider;
 
 const string DefaultProject = "NA";
 const string DefaultTicket = "NA";
@@ -18,19 +19,22 @@ Argument<string> pathArgument = new(
 	Arity = ArgumentArity.ExactlyOne
 };
 
+TODO: https://learn.microsoft.com/en-us/dotnet/core/extensions/dependency-injection-usage
 
 Command trackCommand = new(
 	"track",
 	description: "Add a new or finish the previous tracking entry");
 
+ITimeProvider timeProvider = new TimeProvider();
+
 trackCommand.AddArgument(pathArgument);
-trackCommand.SetHandler(Track, pathArgument);
+trackCommand.SetHandler(filePath => Track(filePath, timeProvider), pathArgument);
 
 Command evaluateCommand = new(
 	"eval",
 	description: "Evaluate the given time frame");
 evaluateCommand.AddArgument(pathArgument);
-evaluateCommand.SetHandler(Evaluate, pathArgument);
+evaluateCommand.SetHandler(filePath => Evaluate(filePath, timeProvider), pathArgument);
 
 Command listCommand = new(
 	"list",
@@ -46,7 +50,7 @@ rootCommand.AddCommand(listCommand);
 return await rootCommand.InvokeAsync(args);
 
 
-static void Track(string filePath)
+static void Track(string filePath, ITimeProvider timeProvider)
 {
 	bool fileFound = File.Exists(filePath);
 
@@ -66,7 +70,7 @@ static void Track(string filePath)
 	{
 		previousEntries[^1] = new(
 				lastEntry!.Start,
-				DateTime.UtcNow.RoundToQuarterHour(),
+				timeProvider.UtcNow.RoundToQuarterHour(),
 				lastEntry.Data);
 		TimeSpan timeTracked = previousEntries.Last().End - previousEntries.Last().Start
 			?? TimeSpan.Zero;
@@ -86,14 +90,14 @@ static void Track(string filePath)
 	{
 		EntryData data = QueryEntryData(previousEntries);
 
-		var timeNow = DateTime.UtcNow.RoundToQuarterHour();
+		var timeNow = timeProvider.UtcNow.RoundToQuarterHour();
 		Entry entry;
 
 		if (previousEntries.Count > 0
 			&& (timeNow - previousEntries.Last().End!.Value) < TimeSpan.FromMinutes(20))
 			entry = new(previousEntries.Last().End!.Value, null, data); // fill gaps that occur while entering data
 		else
-			entry = new(DateTime.UtcNow.RoundToQuarterHour(), null, data);
+			entry = new(timeProvider.UtcNow.RoundToQuarterHour(), null, data);
 
 		using StreamWriter streamWriter = new(filePath, append: true);
 		CsvWriter csvWriter = new CsvWriter(streamWriter);
@@ -134,18 +138,18 @@ static void Track(string filePath)
 	}
 }
 
-static void Evaluate(string filePath)
+static void Evaluate(string filePath, ITimeProvider timeProvider)
 {
 	List<Entry> entries = LoadFromFile(filePath);
 
 	Console.WriteLine("TOTAL TIME:");
-	Console.WriteLine("\tToday: {0}", entries.GetTimeTrackedToday());
-	Console.WriteLine("\tThis month: {0}", entries.GetTimeTrackedThisMonth());
-	Console.WriteLine("\tLast month: {0}", entries.GetTimeTrackedLastMonth());
+	Console.WriteLine("\tToday: {0}", entries.GetTimeTrackedToday(timeProvider));
+	Console.WriteLine("\tThis month: {0}", entries.GetTimeTrackedThisMonth(timeProvider));
+	Console.WriteLine("\tLast month: {0}", entries.GetTimeTrackedLastMonth(timeProvider));
 
-	Console.WriteLine("\nDays worked this month: {0}", entries.GetDaysWorked());
-	Console.WriteLine("\nDays worked last month: {0}", entries.GetDaysWorkedLastMonth());
-	Console.WriteLine("\nAccumulated overtime: {0}", entries.GetOvertime());
+	Console.WriteLine("\nDays worked this month: {0}", entries.GetDaysWorked(timeProvider));
+	Console.WriteLine("\nDays worked last month: {0}", entries.GetDaysWorkedLastMonth(timeProvider));
+	Console.WriteLine("\nAccumulated overtime: {0}", entries.GetOvertime(timeProvider));
 
 	Console.WriteLine("\nBY PROJECT:");
 	List<IGrouping<string, Entry>> entriesByProject = entries
@@ -155,9 +159,9 @@ static void Evaluate(string filePath)
 	foreach(IGrouping<string, Entry> projectGroup in entriesByProject)
 	{
 		string projectName = projectGroup.Key;
-		TimeSpan trackedToday = projectGroup.GetTimeTrackedToday();
-		TimeSpan trackedThisMonth = projectGroup.GetTimeTrackedThisMonth();
-		TimeSpan trackedLastMonth = projectGroup.GetTimeTrackedLastMonth();
+		TimeSpan trackedToday = projectGroup.GetTimeTrackedToday(timeProvider);
+		TimeSpan trackedThisMonth = projectGroup.GetTimeTrackedThisMonth(timeProvider);
+		TimeSpan trackedLastMonth = projectGroup.GetTimeTrackedLastMonth(timeProvider);
 
 		Console.WriteLine("\t- {0}", projectName);
 		Console.WriteLine("\t\tToday: {0}", trackedToday);
