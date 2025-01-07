@@ -143,13 +143,13 @@ static void Evaluate(string filePath, ITimeProvider timeProvider)
 	List<Entry> entries = LoadFromFile(filePath);
 
 	Console.WriteLine("TOTAL TIME:");
-	Console.WriteLine("\tToday: {0}", entries.GetTimeTrackedToday(timeProvider));
-	Console.WriteLine("\tThis month: {0}", entries.GetTimeTrackedThisMonth(timeProvider));
-	Console.WriteLine("\tLast month: {0}", entries.GetTimeTrackedLastMonth(timeProvider));
+	Console.WriteLine("\tToday: {0}", FormatForDisplay(entries.GetTimeTrackedToday(timeProvider)));
+	Console.WriteLine("\tThis month: {0}", FormatForDisplay(entries.GetTimeTrackedThisMonth(timeProvider)));
+	Console.WriteLine("\tLast month: {0}", FormatForDisplay(entries.GetTimeTrackedLastMonth(timeProvider)));
 
 	Console.WriteLine("\nDays worked this month: {0}", entries.GetDaysWorked(timeProvider));
 	Console.WriteLine("\nDays worked last month: {0}", entries.GetDaysWorkedLastMonth(timeProvider));
-	Console.WriteLine("\nAccumulated overtime: {0}", entries.GetOvertime(timeProvider));
+	Console.WriteLine("\nAccumulated overtime: {0}", FormatForDisplay(entries.GetOvertime(timeProvider)));
 
 	Console.WriteLine("\nBY PROJECT:");
 	List<IGrouping<string, Entry>> entriesByProject = entries
@@ -164,9 +164,9 @@ static void Evaluate(string filePath, ITimeProvider timeProvider)
 		TimeSpan trackedLastMonth = projectGroup.GetTimeTrackedLastMonth(timeProvider);
 
 		Console.WriteLine("\t- {0}", projectName);
-		Console.WriteLine("\t\tToday: {0}", trackedToday);
-		Console.WriteLine("\t\tThis month: {0}", trackedThisMonth);
-		Console.WriteLine("\t\tLast month: {0}", trackedLastMonth);
+		Console.WriteLine("\t\tToday: {0}", FormatForDisplay(trackedToday));
+		Console.WriteLine("\t\tThis month: {0}", FormatForDisplay(trackedThisMonth));
+		Console.WriteLine("\t\tLast month: {0}", FormatForDisplay(trackedLastMonth));
 	}
 
 	return;
@@ -195,4 +195,10 @@ static List<Entry> LoadFromFile(string filePath)
 		throw new ArgumentException($"File not found: {filePath}");
 
 	return entries;
+}
+
+static string FormatForDisplay(TimeSpan timeSpan)
+{
+	double hours = Math.Floor(timeSpan.TotalHours);
+	return $"{hours}h, {timeSpan.Minutes}m";
 }
