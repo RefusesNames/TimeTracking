@@ -7,5 +7,9 @@ obj
 properties
 *.args.json
 
+# files related to rider
+.idea
+*.ddargs.json
+
 # files created while testing
 *.csv
