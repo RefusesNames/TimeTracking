@@ -48,6 +48,14 @@ public static class EvaluationService
 		.Distinct()
 		.Count();
 
+	public static int GetDaysWorked(
+			this IEnumerable<Entry> entries)
+		=> entries
+			.Where(entry => entry.HasEndTime())
+			.Select(entry => entry.Start.Date)
+			.Distinct()
+			.Count();
+
 	public static int GetDaysWorkedLastMonth(
 			this IEnumerable<Entry> entries,
 			ITimeProvider timeProvider)

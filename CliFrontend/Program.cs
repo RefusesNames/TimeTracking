@@ -30,11 +30,22 @@ ITimeProvider timeProvider = new TimeProvider();
 trackCommand.AddArgument(pathArgument);
 trackCommand.SetHandler(filePath => Track(filePath, timeProvider), pathArgument);
 
+Argument<int> numberOfMonthsArgument = new(
+	"months",
+	description: "Number of months to evaluate")
+{
+	Arity = ArgumentArity.ZeroOrOne
+};
+
 Command evaluateCommand = new(
 	"eval",
 	description: "Evaluate the given time frame");
 evaluateCommand.AddArgument(pathArgument);
-evaluateCommand.SetHandler(filePath => Evaluate(filePath, timeProvider), pathArgument);
+evaluateCommand.AddArgument(numberOfMonthsArgument);
+evaluateCommand.SetHandler(
+	(filePath, numberOfMonths)	=> Evaluate(filePath, numberOfMonths, timeProvider),
+	pathArgument,
+	numberOfMonthsArgument);
 
 Command listCommand = new(
 	"list",
@@ -138,38 +149,68 @@ static void Track(string filePath, ITimeProvider timeProvider)
 	}
 }
 
-static void Evaluate(string filePath, ITimeProvider timeProvider)
+static void Evaluate(string filePath, int numberOfMonths, ITimeProvider timeProvider)
 {
 	List<Entry> entries = LoadFromFile(filePath);
 
-	Console.WriteLine("TOTAL TIME:");
-	Console.WriteLine("\tToday: {0}", FormatForDisplay(entries.GetTimeTrackedToday(timeProvider)));
-	Console.WriteLine("\tThis month: {0}", FormatForDisplay(entries.GetTimeTrackedThisMonth(timeProvider)));
-	Console.WriteLine("\tLast month: {0}", FormatForDisplay(entries.GetTimeTrackedLastMonth(timeProvider)));
-
-	Console.WriteLine("\nDays worked this month: {0}", entries.GetDaysWorked(timeProvider));
-	Console.WriteLine("\nDays worked last month: {0}", entries.GetDaysWorkedLastMonth(timeProvider));
-	Console.WriteLine("\nAccumulated overtime: {0}", FormatForDisplay(entries.GetOvertime(timeProvider)));
-
-	Console.WriteLine("\nBY PROJECT:");
-	List<IGrouping<string, Entry>> entriesByProject = entries
-		.GroupBy(entry => entry.Data.ProjectName)
-		.ToList();
-
-	foreach(IGrouping<string, Entry> projectGroup in entriesByProject)
+	if (numberOfMonths == 0)
 	{
-		string projectName = projectGroup.Key;
-		TimeSpan trackedToday = projectGroup.GetTimeTrackedToday(timeProvider);
-		TimeSpan trackedThisMonth = projectGroup.GetTimeTrackedThisMonth(timeProvider);
-		TimeSpan trackedLastMonth = projectGroup.GetTimeTrackedLastMonth(timeProvider);
+		Console.WriteLine("TOTAL TIME:");
+		Console.WriteLine("\tToday: {0}", FormatForDisplay(entries.GetTimeTrackedToday(timeProvider)));
+		Console.WriteLine("\tThis month: {0}", FormatForDisplay(entries.GetTimeTrackedThisMonth(timeProvider)));
+		Console.WriteLine("\tLast month: {0}", FormatForDisplay(entries.GetTimeTrackedLastMonth(timeProvider)));
 
-		Console.WriteLine("\t- {0}", projectName);
-		Console.WriteLine("\t\tToday: {0}", FormatForDisplay(trackedToday));
-		Console.WriteLine("\t\tThis month: {0}", FormatForDisplay(trackedThisMonth));
-		Console.WriteLine("\t\tLast month: {0}", FormatForDisplay(trackedLastMonth));
+		Console.WriteLine("\nDays worked this month: {0}", entries.GetDaysWorked(timeProvider));
+		Console.WriteLine("\nDays worked last month: {0}", entries.GetDaysWorkedLastMonth(timeProvider));
+		Console.WriteLine("\nAccumulated overtime: {0}", FormatForDisplay(entries.GetOvertime(timeProvider)));
+
+		Console.WriteLine("\nBY PROJECT:");
+		List<IGrouping<string, Entry>> entriesByProject = entries
+			.GroupBy(entry => entry.Data.ProjectName)
+			.ToList();
+
+		foreach(IGrouping<string, Entry> projectGroup in entriesByProject)
+		{
+			string projectName = projectGroup.Key;
+			TimeSpan trackedToday = projectGroup.GetTimeTrackedToday(timeProvider);
+			TimeSpan trackedThisMonth = projectGroup.GetTimeTrackedThisMonth(timeProvider);
+			TimeSpan trackedLastMonth = projectGroup.GetTimeTrackedLastMonth(timeProvider);
+
+			Console.WriteLine("\t- {0}", projectName);
+			Console.WriteLine("\t\tToday: {0}", FormatForDisplay(trackedToday));
+			Console.WriteLine("\t\tThis month: {0}", FormatForDisplay(trackedThisMonth));
+			Console.WriteLine("\t\tLast month: {0}", FormatForDisplay(trackedLastMonth));
+		}
 	}
+	else if (numberOfMonths > 0)
+	{
+		IEnumerable<DateTime> months = timeProvider.GetLastNMonths(numberOfMonths);
+		foreach(DateTime month in months)
+		{
+			List<Entry> entriesOfTheMonth = entries
+				.Where(entry => entry.HasEndTime())
+				.Where(entry => entry.Start.IsSameMonthAs(month))
+				.ToList();
 
-	return;
+			Console.WriteLine($"\n{month.Month}.{month.Year}:");
+			Console.WriteLine($"Time tracked: {FormatForDisplay(entriesOfTheMonth.GetTimeTracked())}");
+			Console.WriteLine($"Days worked: {entriesOfTheMonth.GetDaysWorked()}");
+			List<IGrouping<string, Entry>> entriesByProject = entriesOfTheMonth
+				.GroupBy(entry => entry.Data.ProjectName)
+				.ToList();
+			foreach(IGrouping<string, Entry> projectGroup in entriesByProject)
+			{
+				string projectName = projectGroup.Key;
+				TimeSpan timeTracked = projectGroup.GetTimeTracked();
+
+				Console.WriteLine("For {0}: {1}", projectName, FormatForDisplay(timeTracked));
+			}
+		}
+	}
+	else if (numberOfMonths < 0)
+	{
+		throw new ArgumentException("Cannot retrieve the entries for a negative amount of months");
+	}
 }
 
 static void List(string filePath)
