@@ -38,7 +38,7 @@ public static class EvaluationService
 				seed: TimeSpan.Zero,
 				(total, nextTimeSpan) => total + nextTimeSpan);
 
-	public static int GetDaysWorked(
+	public static int GetDaysWorkedThisMonth(
 			this IEnumerable<Entry> entries,
 			ITimeProvider timeProvider)
 		=> entries
@@ -76,9 +76,8 @@ public static class EvaluationService
 				(total, nextTimeSpan) => total + nextTimeSpan);
 
 	public static TimeSpan GetOvertime(
-			this IEnumerable<Entry> entries,
-			ITimeProvider timeProvider)
-		=> entries.GetTimeTracked() - entries.GetDaysWorked(timeProvider) * TimeSpan.FromHours(8);
+			this IEnumerable<Entry> entries)
+		=> entries.GetTimeTracked() - entries.GetDaysWorked() * TimeSpan.FromHours(8);
 
 	private static bool IsThisMonth(Entry entry, ITimeProvider timeProvider)
 		=> entry.Start.Date.Year == timeProvider.Today.Year

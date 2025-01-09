@@ -160,9 +160,9 @@ static void Evaluate(string filePath, int numberOfMonths, ITimeProvider timeProv
 		Console.WriteLine("\tThis month: {0}", FormatForDisplay(entries.GetTimeTrackedThisMonth(timeProvider)));
 		Console.WriteLine("\tLast month: {0}", FormatForDisplay(entries.GetTimeTrackedLastMonth(timeProvider)));
 
-		Console.WriteLine("\nDays worked this month: {0}", entries.GetDaysWorked(timeProvider));
+		Console.WriteLine("\nDays worked this month: {0}", entries.GetDaysWorkedThisMonth(timeProvider));
 		Console.WriteLine("\nDays worked last month: {0}", entries.GetDaysWorkedLastMonth(timeProvider));
-		Console.WriteLine("\nAccumulated overtime: {0}", FormatForDisplay(entries.GetOvertime(timeProvider)));
+		Console.WriteLine("\nAccumulated overtime: {0}", FormatForDisplay(entries.GetOvertime()));
 
 		Console.WriteLine("\nBY PROJECT:");
 		List<IGrouping<string, Entry>> entriesByProject = entries
