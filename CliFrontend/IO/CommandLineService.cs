@@ -246,8 +246,8 @@ end_of_loop:
 
 			int bufferSizeBefore = (desiredLength - input.Length) / 2;
 			int bufferSizeAfter = desiredLength - input.Length - bufferSizeBefore;
-			string bufferBefore = new string(spacer, bufferSizeBefore);
-			string bufferAfter = new string(spacer, bufferSizeAfter);
+			string bufferBefore = new (spacer, bufferSizeBefore);
+			string bufferAfter = new (spacer, bufferSizeAfter);
 
 			return bufferBefore + input + bufferAfter;
 		}
@@ -255,6 +255,32 @@ end_of_loop:
 		static void PrintLine(int length)
 		{
 			Console.WriteLine(new string('-', length));
+		}
+
+	}
+
+	public static void ShowCheckResults(List<DayOfWork> days)
+	{
+		foreach(var day in days)
+		{
+			var date = day.Start.Date;
+			Console.Write($"{date.FormatDateForDisplay()}:");
+			Console.Write($" {day.TimeWorked.FormatForDisplay()} worked");
+			if (day.TimeWorked > TimeSpan.FromHours(8))
+				Console.Write($" ({(day.TimeWorked - TimeSpan.FromHours(8)).FormatForDisplay()} overtime)");
+
+			int numberOfBreaks = day.NumberOfBreaks;
+			if (numberOfBreaks != 1)
+			{
+				using var mode = ConsoleMode.Warning;
+
+				Console.WriteLine($", {day.NumberOfBreaks} breaks");
+			}
+			else
+			{
+				Console.WriteLine($", {day.NumberOfBreaks} breaks");
+			}
+
 		}
 
 	}

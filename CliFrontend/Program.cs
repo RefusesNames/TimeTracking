@@ -19,7 +19,7 @@ Argument<string> pathArgument = new(
 	Arity = ArgumentArity.ExactlyOne
 };
 
-TODO: https://learn.microsoft.com/en-us/dotnet/core/extensions/dependency-injection-usage
+// TODO: https://learn.microsoft.com/en-us/dotnet/core/extensions/dependency-injection-usage
 
 Command trackCommand = new(
 	"track",
@@ -53,9 +53,16 @@ Command listCommand = new(
 listCommand.AddArgument(pathArgument);
 listCommand.SetHandler(List, pathArgument);
 
+Command checkCommand = new(
+	"check",
+	description: "Checks the data for unusual stuff");
+checkCommand.AddArgument(pathArgument);
+checkCommand.SetHandler(Check, pathArgument);
+
 rootCommand.AddCommand(trackCommand);
 rootCommand.AddCommand(evaluateCommand);
 rootCommand.AddCommand(listCommand);
+rootCommand.AddCommand(checkCommand);
 
 
 return await rootCommand.InvokeAsync(args);
@@ -156,13 +163,13 @@ static void Evaluate(string filePath, int numberOfMonths, ITimeProvider timeProv
 	if (numberOfMonths == 0)
 	{
 		Console.WriteLine("TOTAL TIME:");
-		Console.WriteLine("\tToday: {0}", FormatForDisplay(entries.GetTimeTrackedToday(timeProvider)));
-		Console.WriteLine("\tThis month: {0}", FormatForDisplay(entries.GetTimeTrackedThisMonth(timeProvider)));
-		Console.WriteLine("\tLast month: {0}", FormatForDisplay(entries.GetTimeTrackedLastMonth(timeProvider)));
+		Console.WriteLine("\tToday: {0}", entries.GetTimeTrackedToday(timeProvider).FormatForDisplay());
+		Console.WriteLine("\tThis month: {0}", entries.GetTimeTrackedThisMonth(timeProvider).FormatForDisplay());
+		Console.WriteLine("\tLast month: {0}", entries.GetTimeTrackedLastMonth(timeProvider).FormatForDisplay());
 
 		Console.WriteLine("\nDays worked this month: {0}", entries.GetDaysWorkedThisMonth(timeProvider));
 		Console.WriteLine("\nDays worked last month: {0}", entries.GetDaysWorkedLastMonth(timeProvider));
-		Console.WriteLine("\nAccumulated overtime: {0}", FormatForDisplay(entries.GetOvertime()));
+		Console.WriteLine("\nAccumulated overtime: {0}", entries.GetOvertime().FormatForDisplay());
 
 		Console.WriteLine("\nBY PROJECT:");
 		List<IGrouping<string, Entry>> entriesByProject = entries
@@ -177,9 +184,9 @@ static void Evaluate(string filePath, int numberOfMonths, ITimeProvider timeProv
 			TimeSpan trackedLastMonth = projectGroup.GetTimeTrackedLastMonth(timeProvider);
 
 			Console.WriteLine("\t- {0}", projectName);
-			Console.WriteLine("\t\tToday: {0}", FormatForDisplay(trackedToday));
-			Console.WriteLine("\t\tThis month: {0}", FormatForDisplay(trackedThisMonth));
-			Console.WriteLine("\t\tLast month: {0}", FormatForDisplay(trackedLastMonth));
+			Console.WriteLine("\t\tToday: {0}", trackedToday.FormatForDisplay());
+			Console.WriteLine("\t\tThis month: {0}", trackedThisMonth.FormatForDisplay());
+			Console.WriteLine("\t\tLast month: {0}", trackedLastMonth.FormatForDisplay());
 		}
 	}
 	else if (numberOfMonths > 0)
@@ -193,7 +200,7 @@ static void Evaluate(string filePath, int numberOfMonths, ITimeProvider timeProv
 				.ToList();
 
 			Console.WriteLine($"\n{month.Month}.{month.Year}:");
-			Console.WriteLine($"Time tracked: {FormatForDisplay(entriesOfTheMonth.GetTimeTracked())}");
+			Console.WriteLine($"Time tracked: {entriesOfTheMonth.GetTimeTracked().FormatForDisplay()}");
 			Console.WriteLine($"Days worked: {entriesOfTheMonth.GetDaysWorked()}");
 			List<IGrouping<string, Entry>> entriesByProject = entriesOfTheMonth
 				.GroupBy(entry => entry.Data.ProjectName)
@@ -203,7 +210,7 @@ static void Evaluate(string filePath, int numberOfMonths, ITimeProvider timeProv
 				string projectName = projectGroup.Key;
 				TimeSpan timeTracked = projectGroup.GetTimeTracked();
 
-				Console.WriteLine("For {0}: {1}", projectName, FormatForDisplay(timeTracked));
+				Console.WriteLine("For {0}: {1}", projectName, timeTracked.FormatForDisplay());
 			}
 		}
 	}
@@ -221,6 +228,16 @@ static void List(string filePath)
 	commandLine.ShowOverview(entries);
 }
 
+static void Check(string filePath)
+{
+	List<Entry> entries = LoadFromFile(filePath);
+	SummaryBuilder summaryBuilder = new(entries);
+	List<DayOfWork> days = summaryBuilder.GetDaysOfWork();
+
+	CommandLineService.ShowCheckResults(days);
+}
+
+
 static List<Entry> LoadFromFile(string filePath)
 {
 	bool fileFound = File.Exists(filePath);
@@ -236,10 +253,4 @@ static List<Entry> LoadFromFile(string filePath)
 		throw new ArgumentException($"File not found: {filePath}");
 
 	return entries;
-}
-
-static string FormatForDisplay(TimeSpan timeSpan)
-{
-	double hours = Math.Floor(timeSpan.TotalHours);
-	return $"{hours}h, {timeSpan.Minutes}m";
 }

@@ -1,6 +1,7 @@
 namespace CliFrontendTests.Util;
 
 using CliFrontend.Util;
+using CliFrontendTests.TestUtils;
 
 public class ExtensionTests
 {
@@ -15,15 +16,14 @@ public class ExtensionTests
 
 	public static IEnumerable<object[]> GetTimes()
 	{
-		yield return new object [] { ByTime(1, 15, 0), ByTime(1, 15, 0) };
-		yield return new object [] { ByTime(1, 22, 0), ByTime(1, 15, 0) };
-		yield return new object [] { ByTime(1, 23, 0), ByTime(1, 30, 0) };
-		yield return new object [] { ByTime(1, 0, 0), ByTime(1, 0, 0) };
-		yield return new object [] { ByTime(1, 7, 0), ByTime(1, 0, 0) };
-		yield return new object [] { ByTime(1, 53, 0), ByTime(2, 0, 0) };
+		TestDataGenerator data = new();
 
-		static DateTime ByTime(int hours, int minutes, int seconds)
-			=> new DateTime(1, 1, 1, hours, minutes, seconds);
+		yield return new object [] { data.GetTime(1, 15, 0), data.GetTime(1, 15, 0) };
+		yield return new object [] { data.GetTime(1, 22, 0), data.GetTime(1, 15, 0) };
+		yield return new object [] { data.GetTime(1, 23, 0), data.GetTime(1, 30, 0) };
+		yield return new object [] { data.GetTime(1, 0, 0), data.GetTime(1, 0, 0) };
+		yield return new object [] { data.GetTime(1, 7, 0), data.GetTime(1, 0, 0) };
+		yield return new object [] { data.GetTime(1, 53, 0), data.GetTime(2, 0, 0) };
 	}
 
 }
